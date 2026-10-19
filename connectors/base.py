@@ -13,7 +13,14 @@ from connectors.schemas import (
     Rendition,
     ValidateResponse,
 )
-from core.errors import ErrorCode, IncuBrixError
+from core.errors import (
+    ConnectionAuthExpiredError,
+    ErrorCode,
+    IncuBrixError,
+    PlatformContentRejectedError,
+    PlatformRateLimitError,
+    PlatformUnavailableError,
+)
 
 
 class BaseConnector(ABC):
@@ -140,9 +147,19 @@ class BaseConnector(ABC):
         if retry_after is not None:
             details["retry_after_seconds"] = retry_after
 
+        msg = f"Platform returned HTTP {status_code}: {response_text or 'No details'}"
+        if error_code == ErrorCode.PLATFORM_RATE_LIMIT:
+            return PlatformRateLimitError(message=msg, retry_after=retry_after)
+        if error_code == ErrorCode.CONNECTION_AUTH_EXPIRED:
+            return ConnectionAuthExpiredError(message=msg)
+        if error_code == ErrorCode.PLATFORM_CONTENT_REJECTED:
+            return PlatformContentRejectedError(message=msg, platform_reason=response_text)
+        if error_code == ErrorCode.PLATFORM_UNAVAILABLE:
+            return PlatformUnavailableError(message=msg)
+
         return IncuBrixError(
             code=error_code,
-            message=f"Platform returned HTTP {status_code}: {response_text or 'No details'}",
+            message=msg,
             details=details,
             status_code=status_code if 400 <= status_code < 500 else 502,
         )

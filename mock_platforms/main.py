@@ -39,8 +39,14 @@ async def clear_scenario(platform: str):
 
 
 def check_scenario_errors(platform: str):
-    """Checks and triggers scripted scenarios (401, 429, 422, 503)."""
+    """Checks and triggers scripted scenarios (401, 403, 422, 429, 503, timeout-before, unsupported-media)."""
     scenario = scenarios.get(platform, {})
+    if scenario.get("timeout_before"):
+        raise HTTPException(status_code=504, detail="Upstream gateway timeout before processing")
+
+    if scenario.get("unsupported_media"):
+        raise HTTPException(status_code=415, detail="Unsupported media format or MIME type")
+
     status = scenario.get("status_code")
     if status == 429:
         retry_after = scenario.get("retry_after", 30)
@@ -52,7 +58,7 @@ def check_scenario_errors(platform: str):
     if status == 401:
         raise HTTPException(status_code=401, detail="Authentication token expired or invalid")
     if status == 403:
-        raise HTTPException(status_code=403, detail="Forbidden / permission denied")
+        raise HTTPException(status_code=403, detail="Forbidden / permission revoked")
     if status == 422:
         raise HTTPException(
             status_code=422,
@@ -92,6 +98,11 @@ async def discourse_create_post(
         post_record["discourse_post_identifier"] = post_record.pop("id")
 
     posts_store[f"discourse_{post_id}"] = post_record
+
+    # Scenario: timeout after accept (record created on platform, but connection dropped/timed out)
+    if scenario.get("timeout_after_accept"):
+        raise HTTPException(status_code=504, detail="Gateway timeout after post accepted by platform")
+
     return post_record
 
 
@@ -106,12 +117,16 @@ async def discourse_get_post(post_id: int):
 
 @app.delete("/discourse/posts/{post_id}.json")
 async def discourse_delete_post(post_id: int):
+    scenario = scenarios.get("discourse", {})
+    if scenario.get("delete_failure"):
+        raise HTTPException(status_code=500, detail="Simulated platform delete failure")
     check_scenario_errors("discourse")
     record = posts_store.get(f"discourse_{post_id}")
     if not record:
         raise HTTPException(status_code=404, detail="Post not found")
     record["deleted"] = True
     return {"success": "OK"}
+
 
 
 # --- Mock Lemmy HTTP API v3 ---

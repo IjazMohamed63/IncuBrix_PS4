@@ -18,6 +18,7 @@ SECRET_PATTERNS = [
     re.compile(r'(?i)(token[\s:=]+)[A-Za-z0-9_\-\.]{10,}'),
     re.compile(r'(?i)(password[\s:=]+)[^\s,;]+'),
     re.compile(r'whsec_[a-zA-Z0-9]{16,}'),
+    re.compile(r'\bak_[a-zA-Z0-9_]{10,}\b'),
 ]
 
 
@@ -51,11 +52,17 @@ class StructuredJsonFormatter(logging.Formatter):
         if record.exc_info:
             log_payload["exception"] = redact_secrets(self.formatException(record.exc_info))
 
-        # Include extra attributes if provided
+        # Include extra attributes if provided with redaction for sensitive keys and values
+        sensitive_key_names = ("secret", "token", "password", "key", "auth", "credential", "jwt")
         if hasattr(record, "extra") and isinstance(record.extra, dict):
             for k, v in record.extra.items():
                 if k not in log_payload:
-                    log_payload[k] = redact_secrets(str(v)) if isinstance(v, str) else v
+                    if any(sens in k.lower() for sens in sensitive_key_names):
+                        log_payload[k] = "[REDACTED]"
+                    elif isinstance(v, str):
+                        log_payload[k] = redact_secrets(v)
+                    else:
+                        log_payload[k] = v
 
         return json.dumps(log_payload)
 
