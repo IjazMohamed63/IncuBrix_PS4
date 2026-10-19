@@ -1,0 +1,149 @@
+from abc import ABC, abstractmethod
+from typing import Dict, Optional
+from connectors.schemas import (
+    BuildAssistPackResponse,
+    ConnectorManifest,
+    ConnectionPayload,
+    DeleteResponse,
+    DestinationPayload,
+    FetchMetricsResponse,
+    GetStatusResponse,
+    PublishResponse,
+    RefreshAuthResponse,
+    Rendition,
+    ValidateResponse,
+)
+from core.errors import ErrorCode, IncuBrixError
+
+
+class BaseConnector(ABC):
+    """Abstract Base Class for all IncuBrix connectors.
+
+    Connectors are purely stateless protocol adapters. They never write to
+    the IncuBrix database and only communicate with external platforms.
+    """
+
+    def __init__(self, manifest: ConnectorManifest):
+        self.manifest = manifest
+        self.key = manifest.key
+
+    @abstractmethod
+    async def validate(
+        self,
+        rendition: Rendition,
+        destination: DestinationPayload,
+        connection: ConnectionPayload,
+    ) -> ValidateResponse:
+        """Validates rendition formatting against destination and manifest specs."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def publish(
+        self,
+        rendition: Rendition,
+        destination: DestinationPayload,
+        connection: ConnectionPayload,
+        idempotency_key: str,
+    ) -> PublishResponse:
+        """Publishes content to the target destination platform."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_status(
+        self,
+        platform_post_id: str,
+        connection: ConnectionPayload,
+    ) -> GetStatusResponse:
+        """Verifies if the published post is active and publicly live."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete(
+        self,
+        platform_post_id: str,
+        connection: ConnectionPayload,
+    ) -> DeleteResponse:
+        """Deletes or unpublishes the specified post."""
+        raise NotImplementedError
+
+    async def fetch_metrics(
+        self,
+        platform_post_id: str,
+        connection: ConnectionPayload,
+        since: Optional[str] = None,
+    ) -> FetchMetricsResponse:
+        """Fetches engagement metrics. Optional capability."""
+        raise IncuBrixError(
+            code=ErrorCode.DEST_SPEC_VIOLATION,
+            message=f"Connector '{self.key}' does not support fetch_metrics.",
+            retryable=False,
+            status_code=400,
+        )
+
+    async def refresh_auth(
+        self,
+        connection: ConnectionPayload,
+    ) -> RefreshAuthResponse:
+        """Refreshes expired or near-expiry authentication credentials. Optional capability."""
+        raise IncuBrixError(
+            code=ErrorCode.DEST_SPEC_VIOLATION,
+            message=f"Connector '{self.key}' does not support refresh_auth.",
+            retryable=False,
+            status_code=400,
+        )
+
+    async def build_assist_pack(
+        self,
+        rendition: Rendition,
+        destination: DestinationPayload,
+    ) -> BuildAssistPackResponse:
+        """Constructs an assisted posting pack where automation is disallowed."""
+        raise IncuBrixError(
+            code=ErrorCode.DEST_SPEC_VIOLATION,
+            message=f"Connector '{self.key}' does not support build_assist_pack.",
+            retryable=False,
+            status_code=400,
+        )
+
+    def map_http_status_to_error(
+        self,
+        status_code: int,
+        response_text: str = "",
+        headers: Optional[Dict[str, str]] = None,
+    ) -> IncuBrixError:
+        """Translates external HTTP status code to IncuBrix shared error code
+        using the connector's manifest error_map, falling back to spec standards.
+        """
+        code_str = str(status_code)
+        mapped_code_name = self.manifest.error_map.get(code_str)
+
+        if mapped_code_name and hasattr(ErrorCode, mapped_code_name):
+            error_code = ErrorCode[mapped_code_name]
+        elif status_code == 429:
+            error_code = ErrorCode.PLATFORM_RATE_LIMIT
+        elif status_code in (401, 403):
+            error_code = ErrorCode.CONNECTION_AUTH_EXPIRED
+        elif status_code == 422:
+            error_code = ErrorCode.PLATFORM_CONTENT_REJECTED
+        elif status_code >= 500:
+            error_code = ErrorCode.PLATFORM_UNAVAILABLE
+        else:
+            error_code = ErrorCode.INTERNAL_ERROR
+
+        retry_after = None
+        if headers:
+            retry_header = headers.get("retry-after") or headers.get("Retry-After")
+            if retry_header and str(retry_header).isdigit():
+                retry_after = int(retry_header)
+
+        details = {"platform_status_code": status_code, "platform_body": response_text}
+        if retry_after is not None:
+            details["retry_after_seconds"] = retry_after
+
+        return IncuBrixError(
+            code=error_code,
+            message=f"Platform returned HTTP {status_code}: {response_text or 'No details'}",
+            details=details,
+            status_code=status_code if 400 <= status_code < 500 else 502,
+        )
+
