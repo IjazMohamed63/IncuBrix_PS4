@@ -3,8 +3,10 @@ import inspect
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from api.middleware.correlation import CorrelationIdMiddleware
 from api.middleware.error_handler import register_error_handlers
+from api.middleware.security import DemoSecurityMiddleware
 from api.routers.certification import router as certification_router
 from api.routers.connectors import router as connector_router
 from api.routers.destinations import router as destinations_router
@@ -12,6 +14,8 @@ from api.routers.files import router as files_router
 from api.routers.health import router as health_router
 from api.routers.jobs import router as jobs_router
 from api.routers.publish import router as publish_router
+from api.routers.rules import router as rules_router
+from api.routers.security import router as security_router
 from connectors.base import BaseConnector
 from connectors.registry import registry
 from core.config import get_settings
@@ -85,7 +89,16 @@ app = FastAPI(
 )
 
 # Register Middlewares
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Correlation-Id", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
+)
 app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(DemoSecurityMiddleware)
 
 # Register Global Exception Handlers
 register_error_handlers(app)
@@ -98,6 +111,8 @@ app.include_router(publish_router)
 app.include_router(jobs_router)
 app.include_router(files_router)
 app.include_router(certification_router)
+app.include_router(rules_router)
+app.include_router(security_router)
 
 # Initial load of connectors
 load_all_connectors()

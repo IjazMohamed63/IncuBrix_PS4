@@ -116,6 +116,31 @@ class PersistentJobManager:
                 "updated_at": row["updated_at"],
             }
 
+    def list_jobs(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Lists recent durable background jobs ordered by creation time desc."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT * FROM background_jobs ORDER BY created_at DESC LIMIT ?", (limit,)
+            )
+            rows = cursor.fetchall()
+            results = []
+            for row in rows:
+                results.append({
+                    "job_id": row["job_id"],
+                    "idempotency_key": row["idempotency_key"],
+                    "status": row["status"],
+                    "progress": row["progress"],
+                    "payload": json.loads(row["payload"] or "{}"),
+                    "result": json.loads(row["result"] or "{}") if row["result"] else None,
+                    "result_links": json.loads(row["result_links"] or "{}"),
+                    "manifest": json.loads(row["manifest"] or "{}") if row["manifest"] else None,
+                    "callback_url": row["callback_url"],
+                    "error_message": row["error_message"],
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                })
+            return results
+
     def update_progress(self, job_id: str, progress: int, status: str = "running") -> None:
         """Updates progress (0-100) and status."""
         now = datetime.now(timezone.utc).isoformat()

@@ -7,4 +7,6 @@ __pycache__/
 storage_artifacts/
 data/
 batch_run_output/
-*.db
+*.db
+web/node_modules/
+web/dist/

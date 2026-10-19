@@ -26,6 +26,67 @@ def get_registry() -> ConnectorRegistry:
     return registry
 
 
+@router.get("", status_code=200)
+async def list_connectors(reg: ConnectorRegistry = Depends(get_registry)) -> Dict[str, Any]:
+    """Lists all registered connectors with manifests, capabilities, rate limits, and kill-switch states."""
+    manifests = reg.list_manifests()
+    data = []
+    for key, manifest in manifests.items():
+        is_disabled = reg.is_disabled(key)
+        data.append({
+            "key": key,
+            "version": manifest.version,
+            "tier": manifest.tier.value if hasattr(manifest.tier, "value") else str(manifest.tier),
+            "auth": manifest.auth.value if hasattr(manifest.auth, "value") else str(manifest.auth),
+            "surfaces": [s.model_dump() for s in manifest.surfaces],
+            "rate_limits": manifest.rate_limits.model_dump(),
+            "capabilities": manifest.capabilities,
+            "error_map": manifest.error_map,
+            "instance_param": manifest.instance_param,
+            "disabled": is_disabled,
+            "health": "disabled" if is_disabled else "healthy",
+        })
+    return {"connectors": data, "count": len(data)}
+
+
+@router.get("/{connector_key}/manifest", status_code=200)
+async def get_connector_manifest(
+    connector_key: str = Path(...),
+    reg: ConnectorRegistry = Depends(get_registry),
+) -> Dict[str, Any]:
+    """Retrieves manifest and status for a specific connector."""
+    manifest = reg.get_manifest(connector_key)
+    is_disabled = reg.is_disabled(connector_key)
+    return {
+        "manifest": manifest.model_dump(),
+        "disabled": is_disabled,
+        "health": "disabled" if is_disabled else "healthy",
+    }
+
+
+@router.post("/{connector_key}/kill-switch", status_code=200)
+async def toggle_connector_kill_switch(
+    connector_key: str = Path(...),
+    reg: ConnectorRegistry = Depends(get_registry),
+) -> Dict[str, Any]:
+    """Toggles kill-switch for a connector."""
+    _ = reg.get_manifest(connector_key)  # Ensures connector exists
+    if reg.is_disabled(connector_key):
+        reg.enable_connector(connector_key)
+        new_state = False
+    else:
+        reg.disable_connector(connector_key)
+        new_state = True
+
+    return {
+        "connector_key": connector_key,
+        "disabled": new_state,
+        "health": "disabled" if new_state else "healthy",
+        "message": f"Connector '{connector_key}' {'disabled' if new_state else 're-enabled'}.",
+    }
+
+
+
 @router.post("/{connector_key}/{method}")
 async def dispatch_connector_method(
     connector_key: str = Path(..., description="Key of the connector (e.g. discourse, lemmy, stub)"),

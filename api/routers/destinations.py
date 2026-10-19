@@ -19,6 +19,28 @@ router = APIRouter(prefix="/api/v1/destinations", tags=["destinations"])
 _catalogue_store: Dict[str, Dict[str, Any]] = {}
 
 
+def seed_initial_catalogue_if_empty():
+    """Auto-seeds destination catalogue with initial seed data if store is empty."""
+    if not _catalogue_store:
+        from pathlib import Path
+        seed_path = Path(__file__).resolve().parent.parent.parent / "data" / "seed_catalogue.csv"
+        if seed_path.exists():
+            from engine.catalogue_importer import catalogue_importer
+            with open(seed_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            res = catalogue_importer.import_csv_content(content, safe_reachability_check=False, enrich_relevance=False)
+            for d in res.destinations:
+                dest_id = f"dest_{uuid.uuid4().hex[:8]}"
+                d["id"] = dest_id
+                d["level"] = "L1" if d.get("connector_key") != "assisted" else "L0"
+                d["created_at"] = datetime.now(timezone.utc).isoformat()
+                _catalogue_store[dest_id] = d
+
+
+seed_initial_catalogue_if_empty()
+
+
+
 class DestinationCreateRequest(BaseModel):
     name: str
     url: str

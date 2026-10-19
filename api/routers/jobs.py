@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel, Field
 
@@ -32,6 +32,12 @@ async def create_background_job(
         "progress": 0,
         "links": {"self": f"/api/v1/jobs/{job_id}"},
     }
+
+
+@router.get("", status_code=status.HTTP_200_OK)
+async def list_background_jobs(limit: int = 50) -> List[Dict[str, Any]]:
+    """Lists recent background jobs with idempotency status, progress, and result links."""
+    return job_manager.list_jobs(limit=limit)
 
 
 @router.get("/{job_id}")
