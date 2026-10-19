@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from connectors.schemas import (
     BuildAssistPackResponse,
     ConnectorManifest,
@@ -33,6 +33,26 @@ class BaseConnector(ABC):
     def __init__(self, manifest: ConnectorManifest):
         self.manifest = manifest
         self.key = manifest.key
+
+    async def execute_request(
+        self,
+        http_client: Optional[Any],
+        method: str,
+        url: str,
+        **kwargs,
+    ) -> Any:
+        """Executes HTTP request, automatically routing http://test to mock platforms app."""
+        if http_client:
+            return await http_client.request(method, url, **kwargs)
+        if url.startswith("http://test"):
+            import httpx
+            from mock_platforms.main import app as mock_app
+            transport = httpx.ASGITransport(app=mock_app)
+            async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+                return await client.request(method, url, **kwargs)
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            return await client.request(method, url, **kwargs)
 
     @abstractmethod
     async def validate(

@@ -35,10 +35,7 @@ class DevtoConnector(BaseConnector):
         }
 
     async def _request(self, method: str, url: str, **kwargs) -> httpx.Response:
-        if self._http_client:
-            return await self._http_client.request(method, url, **kwargs)
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            return await client.request(method, url, **kwargs)
+        return await self.execute_request(self._http_client, method, url, **kwargs)
 
     async def validate(
         self,

@@ -105,6 +105,7 @@ class PublishEngine:
         connector = connector_override or registry.get_connector(platform_key)
 
         # 5. Execution with Timeout Reconciliation
+        start_time = datetime.now(timezone.utc)
         try:
             pub_res: PublishResponse = await connector.publish(
                 rendition=rendition,
@@ -113,10 +114,31 @@ class PublishEngine:
                 idempotency_key=idempotency_key,
             )
             result_data = pub_res.model_dump()
+            end_time = datetime.now(timezone.utc)
 
             # Record success in rate limiter and audit history
             await rate_limiter.record_success(rate_key)
             audit_store.record_publication(dest_id)
+
+            # Output manifest on every result (Prompt 5 requirement)
+            from core.manifest_builder import build_output_manifest
+            manifest = build_output_manifest(
+                providers={"connector": platform_key},
+                models="unknown",
+                versions={"manifest_version": "1.0.0"},
+                settings={"destination_id": dest_id, "platform_key": platform_key},
+                seed="unknown",
+                timings={
+                    "started_at": start_time.isoformat(),
+                    "completed_at": end_time.isoformat(),
+                    "duration_ms": int((end_time - start_time).total_seconds() * 1000),
+                },
+                cost_estimate="unknown",
+                warnings=decision.warnings,
+                licence_rights="unknown",
+                ai_generated=bool(rendition.ai_disclosure),
+            )
+            result_data["manifest"] = manifest
 
             await idempotency_manager.record_completion(idempotency_key, result_data, status_code=200, lock=lock)
             return result_data
@@ -142,15 +164,27 @@ class PublishEngine:
                 if reconciled_res:
                     await rate_limiter.record_success(rate_key)
                     audit_store.record_publication(dest_id)
+                    from core.manifest_builder import build_output_manifest
+                    reconciled_res["manifest"] = build_output_manifest(
+                        providers={"connector": platform_key},
+                        settings={"destination_id": dest_id, "reconciled": True},
+                        ai_generated=bool(rendition.ai_disclosure),
+                    )
                     await idempotency_manager.record_completion(idempotency_key, reconciled_res, status_code=200, lock=lock)
                     return reconciled_res
 
                 # Undeterminable -> mark needs_review
+                from core.manifest_builder import build_output_manifest
                 needs_review_payload = {
                     "status": "needs_review",
                     "platform_post_id": "undeterminable",
                     "live_url": None,
                     "warnings": ["Timeout after accept: post status could not be verified automatically. Human review required."],
+                    "manifest": build_output_manifest(
+                        providers={"connector": platform_key},
+                        settings={"destination_id": dest_id, "status": "needs_review"},
+                        warnings=["Timeout after accept: post status could not be verified automatically."],
+                    ),
                 }
                 await idempotency_manager.record_completion(idempotency_key, needs_review_payload, status_code=202, lock=lock)
                 return needs_review_payload

@@ -1,0 +1,43 @@
+[
+  {
+    "id": "batch_item_001",
+    "title": "Scaling Real-Time Video Streaming Pipelines",
+    "body": "Detailed architectural walkthrough of stateless distribution nodes and federated edge caching.",
+    "destination": {
+      "id": "batch_dest_devto_01",
+      "name": "Dev.to Architecture Hub",
+      "platform_key": "devto",
+      "parameters": {
+        "base_url": "http://test/devto"
+      }
+    },
+    "ai_disclosure": "Written with Gemini assistance."
+  },
+  {
+    "id": "batch_item_002",
+    "title": "Microservices Communication with Webhooks",
+    "body": "Overview of idempotent delivery, exponential backoff, and signature verification patterns.",
+    "destination": {
+      "id": "batch_dest_devto_02",
+      "name": "Dev.to Systems Hub",
+      "platform_key": "devto",
+      "parameters": {
+        "base_url": "http://test/devto"
+      }
+    }
+  },
+  {
+    "id": "batch_item_003_promo_blocked",
+    "title": "Commercial Special Offer",
+    "body": "Buy now with discount coupon for limited offer sale and pricing access!",
+    "destination": {
+      "id": "batch_dest_strict_03",
+      "name": "Strict Academic Forum",
+      "platform_key": "devto",
+      "parameters": {
+        "base_url": "http://test/devto",
+        "self_promo_allowed": false
+      }
+    }
+  }
+]

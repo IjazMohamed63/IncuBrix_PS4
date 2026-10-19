@@ -4,3 +4,7 @@ node_modules/
 __pycache__/
 *.pem
 .venv/
+storage_artifacts/
+data/
+batch_run_output/
+*.db
