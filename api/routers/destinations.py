@@ -149,3 +149,109 @@ async def publish_to_destination(
         idempotency_key=req.idempotency_key,
     )
     return res.model_dump()
+
+
+class RuleProposeRequest(BaseModel):
+    rules_text: str
+    rules_url: Optional[str] = None
+
+
+class RuleConfirmRequest(BaseModel):
+    proposal_id: str
+    confirmed_by: Optional[str] = "human_operator"
+
+
+@router.post("/import-csv", status_code=status.HTTP_202_ACCEPTED)
+async def import_destinations_csv(
+    file: Optional[Any] = None,
+    csv_text: Optional[str] = Body(None, embed=True),
+    safe_reachability: bool = False,
+) -> Dict[str, Any]:
+    """Imports destinations via CSV with deduplication, normalization, and job tracking."""
+    from engine.catalogue_importer import catalogue_importer
+    from core.jobs import job_manager
+
+    content = ""
+    if file and hasattr(file, "read"):
+        content_bytes = await file.read()
+        content = content_bytes.decode("utf-8")
+    elif csv_text:
+        content = csv_text
+
+    if not content.strip():
+        raise IncuBrixError(
+            code=ErrorCode.VALIDATION_ERROR,
+            message="CSV content cannot be empty.",
+            status_code=400,
+        )
+
+    job_id = job_manager.create_job(payload={"action": "catalogue_csv_import"})
+
+    result = catalogue_importer.import_csv_content(
+        csv_content=content,
+        safe_reachability_check=safe_reachability,
+        enrich_relevance=True,
+        job_id=job_id,
+    )
+
+    # Populate catalogue store with imported records
+    for d in result.destinations:
+        new_id = str(uuid.uuid4())
+        d["id"] = new_id
+        d["level"] = "L0"
+        d["created_at"] = datetime.now(timezone.utc).isoformat()
+        _catalogue_store[new_id] = d
+
+    return {
+        "job_id": job_id,
+        "status": "completed",
+        "total_rows": result.total_rows,
+        "imported_rows": result.imported_rows,
+        "duplicate_rows": result.duplicate_rows,
+        "invalid_rows": result.invalid_rows,
+        "languages_detected": result.languages_detected,
+        "error_report_download_url": result.error_report_download_url,
+        "links": {"job": f"/api/v1/jobs/{job_id}"},
+    }
+
+
+@router.post("/{destination_id}/propose-rules", status_code=status.HTTP_200_OK)
+async def propose_rules_for_destination(
+    destination_id: str = Path(...),
+    req: RuleProposeRequest = Body(...),
+) -> Dict[str, Any]:
+    """AI adapter-based step proposing community posting rules from guidelines text."""
+    from engine.rule_capture import rule_capture_manager
+
+    dest = _catalogue_store.get(destination_id)
+    if not dest:
+        raise IncuBrixError(code=ErrorCode.NOT_FOUND, message=f"Destination '{destination_id}' not found.", status_code=404)
+
+    proposal = await rule_capture_manager.propose_rules(
+        destination_id=destination_id,
+        rules_text=req.rules_text,
+        rules_url=req.rules_url,
+    )
+    return proposal.model_dump()
+
+
+@router.post("/{destination_id}/confirm-rules", status_code=status.HTTP_200_OK)
+async def confirm_rules_for_destination(
+    destination_id: str = Path(...),
+    req: RuleConfirmRequest = Body(...),
+) -> Dict[str, Any]:
+    """Human confirmation step required before activating proposed community rules."""
+    from engine.rule_capture import rule_capture_manager
+
+    dest = _catalogue_store.get(destination_id)
+    if not dest:
+        raise IncuBrixError(code=ErrorCode.NOT_FOUND, message=f"Destination '{destination_id}' not found.", status_code=404)
+
+    params = dest.setdefault("parameters", {})
+    record = rule_capture_manager.confirm_rules(
+        proposal_id=req.proposal_id,
+        destination_parameters=params,
+        confirmed_by=req.confirmed_by or "human_operator",
+    )
+    return record.model_dump()
+

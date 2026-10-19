@@ -1,0 +1,27 @@
+key: hashnode
+version: 1.0.0
+tier: bridge
+auth: bot_token
+surfaces:
+  - key: article
+    content_types: [text, markdown, image]
+    spec:
+      title_max_chars: 250
+      body_max_chars: 100000
+      links_allowed: true
+rate_limits:
+  per_connection:
+    requests: 30
+    per_seconds: 30
+capabilities: [publish, status, delete, metrics]
+error_map:
+  "400": VALIDATION_ERROR
+  "401": CONNECTION_AUTH_EXPIRED
+  "403": PLATFORM_PERMISSION_DENIED
+  "422": PLATFORM_CONTENT_REJECTED
+  "429": PLATFORM_RATE_LIMIT
+  "500": PLATFORM_UNAVAILABLE
+  "502": PLATFORM_UNAVAILABLE
+  "503": PLATFORM_UNAVAILABLE
+  "504": PLATFORM_UNAVAILABLE
+instance_param: base_url

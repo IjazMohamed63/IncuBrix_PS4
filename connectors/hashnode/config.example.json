@@ -1,0 +1,8 @@
+{
+  "connector_key": "hashnode",
+  "base_url": "https://gql.hashnode.com",
+  "token": "YOUR_HASHNODE_PERSONAL_ACCESS_TOKEN",
+  "extra": {
+    "publication_id": "60a12b34c56d78e901f23456"
+  }
+}

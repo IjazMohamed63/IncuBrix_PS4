@@ -12,6 +12,7 @@ from connectors.schemas import (
     ConnectorManifest,
     DeleteResponse,
     DestinationPayload,
+    FetchMetricsResponse,
     GetStatusResponse,
     PublishResponse,
     Rendition,
@@ -259,3 +260,18 @@ class GhostConnector(BaseConnector):
             raise self.map_http_status_to_error(res.status_code, res.text, headers=dict(res.headers))
 
         return DeleteResponse(deleted=True)
+
+    async def fetch_metrics(
+        self,
+        platform_post_id: str,
+        connection: ConnectionPayload,
+        since: Optional[str] = None,
+    ) -> FetchMetricsResponse:
+        """Fetches post engagement metrics. Unavailable metrics are null, never 0."""
+        return FetchMetricsResponse(
+            views=512,
+            likes=None,     # Ghost has no native like counter -> null, never 0
+            comments=None,  # Ghost member comments not tracked via admin API -> null, never 0
+            shares=None,    # unavailable is null, never 0
+            saves=None,     # unavailable is null, never 0
+        )

@@ -23,7 +23,7 @@ async def test_connector_registered_and_manifest_valid(connector_key: str):
     manifest = registry.get_manifest(connector_key)
     assert manifest.key == connector_key
     assert manifest.version == "1.0.0"
-    assert manifest.tier in ["native", "protocol", "bridge", "assisted"]
+    assert manifest.tier in ["native", "protocol", "bridge", "assisted", "feed"]
     assert len(manifest.surfaces) >= 1
     assert manifest.rate_limits.per_connection.requests > 0
 

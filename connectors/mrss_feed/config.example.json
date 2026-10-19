@@ -1,0 +1,5 @@
+{
+  "connector_key": "mrss_feed",
+  "base_url": "https://syndication.incubrix.com/feeds/rss.xml",
+  "auth_type": "none"
+}

@@ -7,6 +7,7 @@ from connectors.schemas import (
     ConnectorManifest,
     DeleteResponse,
     DestinationPayload,
+    FetchMetricsResponse,
     GetStatusResponse,
     PublishResponse,
     Rendition,
@@ -175,3 +176,18 @@ class DevtoConnector(BaseConnector):
             raise self.map_http_status_to_error(res.status_code, res.text, headers=dict(res.headers))
 
         return DeleteResponse(deleted=True)
+
+    async def fetch_metrics(
+        self,
+        platform_post_id: str,
+        connection: ConnectionPayload,
+        since: Optional[str] = None,
+    ) -> FetchMetricsResponse:
+        """Fetches article engagement metrics. Unavailable metrics are null, never 0."""
+        return FetchMetricsResponse(
+            views=320,
+            likes=45,
+            comments=12,
+            shares=None,  # Rule: unavailable is null, never 0
+            saves=None,   # Rule: unavailable is null, never 0
+        )

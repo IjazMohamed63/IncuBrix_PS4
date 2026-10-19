@@ -364,6 +364,64 @@ async def partner_delete_delivery(delivery_id: str):
     return {"deleted": True, "delivery_id": delivery_id}
 
 
+# --- Mock Hashnode GraphQL API ---
+@app.post("/hashnode/graphql")
+async def mock_hashnode_graphql(request: Request):
+    check_scenario_errors("hashnode")
+    data = await request.json()
+    query = data.get("query", "")
+    variables = data.get("variables", {})
+
+    if "publishPost" in query:
+        post_input = variables.get("input", {})
+        post_id = f"hn_{len(posts_store) + 100}"
+        slug = post_input.get("title", "story").lower().replace(" ", "-")[:40]
+        record = {
+            "id": post_id,
+            "title": post_input.get("title"),
+            "slug": slug,
+            "url": f"https://hashnode.com/story/{slug}",
+            "deleted": False,
+        }
+        posts_store[f"hashnode_{post_id}"] = record
+        return {
+            "data": {
+                "publishPost": {
+                    "post": record
+                }
+            }
+        }
+    elif "GetPost" in query or "post(" in query:
+        post_id = variables.get("id")
+        record = posts_store.get(f"hashnode_{post_id}")
+        if not record or record.get("deleted"):
+            return {"data": {"post": None}}
+        return {"data": {"post": record}}
+    elif "RemovePost" in query:
+        post_id = variables.get("id")
+        record = posts_store.get(f"hashnode_{post_id}")
+        if record:
+            record["deleted"] = True
+        return {"data": {"removePost": {"post": {"id": post_id}}}}
+    return {"data": {}}
+
+
+# --- Mock Slack Webhook API ---
+@app.post("/slack/webhook")
+async def mock_slack_webhook(request: Request):
+    check_scenario_errors("slack")
+    data = await request.json()
+    msg_id = f"slack_{int(time.time())}_{len(posts_store) + 1}"
+    record = {
+        "id": msg_id,
+        "text": data.get("text", ""),
+        "blocks": data.get("blocks", []),
+        "deleted": False,
+    }
+    posts_store[f"slack_{msg_id}"] = record
+    return Response(content="ok", status_code=200)
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("mock_platforms.main:app", host="0.0.0.0", port=8080)
