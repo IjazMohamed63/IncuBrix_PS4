@@ -1,0 +1,27 @@
+key: signed_webhook
+version: 1.0.0
+tier: protocol
+auth: api_key
+surfaces:
+  - key: payload
+    content_types: [json]
+    spec:
+      title_max_chars: 500
+      body_max_chars: 1048576
+      links_allowed: true
+rate_limits:
+  per_connection:
+    requests: 120
+    per_seconds: 60
+capabilities: [publish, status, delete]
+error_map:
+  "400": PLATFORM_CONTENT_REJECTED
+  "401": CONNECTION_AUTH_EXPIRED
+  "403": CONNECTION_AUTH_EXPIRED
+  "422": PLATFORM_CONTENT_REJECTED
+  "429": PLATFORM_RATE_LIMIT
+  "500": PLATFORM_UNAVAILABLE
+  "502": PLATFORM_UNAVAILABLE
+  "503": PLATFORM_UNAVAILABLE
+  "504": PLATFORM_UNAVAILABLE
+instance_param: base_url

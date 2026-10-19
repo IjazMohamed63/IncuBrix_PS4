@@ -1,0 +1,150 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: incubrix_postgres
+    environment:
+      POSTGRES_USER: incubrix_user
+      POSTGRES_PASSWORD: incubrix_password
+      POSTGRES_DB: incubrix_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incubrix_user -d incubrix_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: incubrix_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: cleanstart/minio:latest
+    container_name: incubrix_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: incubrix_minio_admin
+      MINIO_ROOT_PASSWORD: incubrix_minio_secret_key_change_in_prod
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mock-platforms:
+    build:
+      context: .
+      dockerfile: mock_platforms/Dockerfile
+    container_name: incubrix_mock_platforms
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  ghost:
+    image: ghost:5-alpine
+    container_name: incubrix_ghost
+    environment:
+      NODE_ENV: development
+      url: http://localhost:2368
+      database__client: sqlite3
+      database__connection__filename: /var/lib/ghost/content/data/ghost-dev.db
+    ports:
+      - "2368:2368"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2368/ghost/api/admin/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  lemmy:
+    image: dessalines/lemmy:0.19.5
+    container_name: incubrix_lemmy
+    ports:
+      - "8536:8536"
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: incubrix_api
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      APP_ENV: development
+      APP_PORT: 8000
+      DATABASE_URL: postgresql+asyncpg://incubrix_user:incubrix_password@postgres:5432/incubrix_db
+      DATABASE_SYNC_URL: postgresql://incubrix_user:incubrix_password@postgres:5432/incubrix_db
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: minio:9000
+      S3_ACCESS_KEY: incubrix_minio_admin
+      S3_SECRET_KEY: incubrix_minio_secret_key_change_in_prod
+      S3_BUCKET_NAME: incubrix-artifacts
+      S3_SECURE: "false"
+      MOCK_PLATFORMS_URL: http://mock-platforms:8080
+      SIMULATION_MODE: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      mock-platforms:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: incubrix_worker
+    command: ["python", "worker/worker.py"]
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+asyncpg://incubrix_user:incubrix_password@postgres:5432/incubrix_db
+      DATABASE_SYNC_URL: postgresql://incubrix_user:incubrix_password@postgres:5432/incubrix_db
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: minio:9000
+      S3_ACCESS_KEY: incubrix_minio_admin
+      S3_SECRET_KEY: incubrix_minio_secret_key_change_in_prod
+      SIMULATION_MODE: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:

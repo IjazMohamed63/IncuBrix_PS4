@@ -1,0 +1,17 @@
+{
+  "destination": {
+    "name": "Partner Syndication Webhook Endpoint",
+    "url": "https://partner.example.com/api/v1/webhook",
+    "platform_key": "signed_webhook",
+    "connector_key": "signed_webhook",
+    "surface": "payload",
+    "parameters": {
+      "base_url": "https://partner.example.com/api/v1"
+    }
+  },
+  "connection": {
+    "auth_type": "api_key",
+    "api_key": "whsec_98f12a34b56c78d901e23f45a67b89c0",
+    "base_url": "https://partner.example.com/api/v1"
+  }
+}

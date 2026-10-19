@@ -1,0 +1,17 @@
+{
+  "destination": {
+    "name": "Dev.to Technical Blog Channel",
+    "url": "https://dev.to",
+    "platform_key": "devto",
+    "connector_key": "devto",
+    "surface": "article",
+    "parameters": {
+      "base_url": "https://dev.to"
+    }
+  },
+  "connection": {
+    "auth_type": "api_key",
+    "api_key": "devto_api_sec_sample_token",
+    "base_url": "https://dev.to"
+  }
+}

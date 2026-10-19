@@ -1,0 +1,21 @@
+{
+  "destination": {
+    "name": "Discourse AI Builders Community",
+    "url": "https://discourse.example.com/c/ai-builders",
+    "platform_key": "discourse",
+    "connector_key": "discourse",
+    "surface": "topic",
+    "parameters": {
+      "base_url": "https://discourse.example.com",
+      "category_id": 4
+    }
+  },
+  "connection": {
+    "auth_type": "api_key",
+    "api_key": "disc_sec_d92847a9823f4b",
+    "base_url": "https://discourse.example.com",
+    "extra": {
+      "username": "incubrix_bot"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "destination": {
+    "name": "Niche Indie Founders High-Trust Forum",
+    "url": "https://indiecommunity.example.com/submit",
+    "platform_key": "assisted",
+    "connector_key": "assisted",
+    "surface": "manual_pack",
+    "automation_allowed": false,
+    "parameters": {
+      "submit_url": "https://indiecommunity.example.com/submit"
+    }
+  },
+  "connection": {
+    "auth_type": "none"
+  }
+}

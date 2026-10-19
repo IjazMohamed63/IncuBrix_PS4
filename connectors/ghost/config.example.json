@@ -1,0 +1,17 @@
+{
+  "destination": {
+    "name": "Ghost Engineering Publication",
+    "url": "http://localhost:2368",
+    "platform_key": "ghost",
+    "connector_key": "ghost",
+    "surface": "post",
+    "parameters": {
+      "base_url": "http://localhost:2368"
+    }
+  },
+  "connection": {
+    "auth_type": "api_key",
+    "api_key": "651f4d9904bb97000109d941:e89a696c21e646279f1d0b7414dfac86fa7984f880f08960fa236d6cf5095314",
+    "base_url": "http://localhost:2368"
+  }
+}

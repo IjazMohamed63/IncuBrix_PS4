@@ -1,0 +1,18 @@
+{
+  "destination": {
+    "name": "Lemmy Fediverse Technology Community",
+    "url": "http://localhost:8536/c/technology",
+    "platform_key": "lemmy",
+    "connector_key": "lemmy",
+    "surface": "post",
+    "parameters": {
+      "base_url": "http://localhost:8536",
+      "community_id": 1
+    }
+  },
+  "connection": {
+    "auth_type": "bot_token",
+    "token": "lemmy_jwt_session_token_example",
+    "base_url": "http://localhost:8536"
+  }
+}

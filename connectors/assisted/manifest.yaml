@@ -1,0 +1,18 @@
+key: assisted
+version: 1.0.0
+tier: assisted
+auth: none
+surfaces:
+  - key: manual_pack
+    content_types: [text, image, video]
+    spec:
+      title_max_chars: 300
+      body_max_chars: 40000
+      links_allowed: true
+rate_limits:
+  per_connection:
+    requests: 60
+    per_seconds: 60
+capabilities: [validate, build_assist_pack]
+error_map:
+  "422": PLATFORM_CONTENT_REJECTED
