@@ -1,0 +1,1347 @@
+openapi: 3.1.0
+info:
+  title: IncuBrix Long-Tail Distribution Network
+  description: Containerized distribution connector engine for Engineering Assessment
+    4.
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      tags:
+      - health
+      summary: Health Check
+      description: Liveness probe confirming the HTTP server is responsive.
+      operationId: health_check_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /ready:
+    get:
+      tags:
+      - health
+      summary: Readiness Check
+      description: Deep readiness probe verifying database, redis queue, and S3 object
+        storage.
+      operationId: readiness_check_ready_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /connector/v1:
+    get:
+      tags:
+      - connector-contract
+      summary: List Connectors
+      description: Lists all registered connectors with manifests, capabilities, rate
+        limits, and kill-switch states.
+      operationId: list_connectors_connector_v1_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response List Connectors Connector V1 Get
+  /connector/v1/{connector_key}/manifest:
+    get:
+      tags:
+      - connector-contract
+      summary: Get Connector Manifest
+      description: Retrieves manifest and status for a specific connector.
+      operationId: get_connector_manifest_connector_v1__connector_key__manifest_get
+      parameters:
+      - name: connector_key
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Connector Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Get Connector Manifest Connector V1  Connector Key  Manifest
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /connector/v1/{connector_key}/kill-switch:
+    post:
+      tags:
+      - connector-contract
+      summary: Toggle Connector Kill Switch
+      description: Toggles kill-switch for a connector.
+      operationId: toggle_connector_kill_switch_connector_v1__connector_key__kill_switch_post
+      parameters:
+      - name: connector_key
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Connector Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Toggle Connector Kill Switch Connector V1  Connector
+                  Key  Kill Switch Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /connector/v1/{connector_key}/{method}:
+    post:
+      tags:
+      - connector-contract
+      summary: Dispatch Connector Method
+      description: 'Dispatches requests according to the exact IncuBrix connector
+        contract:
+
+
+        POST /connector/v1/{connector_key}/{method}'
+      operationId: dispatch_connector_method_connector_v1__connector_key___method__post
+      parameters:
+      - name: connector_key
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Key of the connector (e.g. discourse, lemmy, stub)
+          title: Connector Key
+        description: Key of the connector (e.g. discourse, lemmy, stub)
+      - name: method
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Connector method to invoke
+          title: Method
+        description: Connector method to invoke
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: JSON payload conforming to method schema
+              title: Payload
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                title: Response Dispatch Connector Method Connector V1  Connector
+                  Key   Method  Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/destinations:
+    get:
+      tags:
+      - destinations
+      summary: List Destinations
+      description: Lists all configured destination catalogue rows.
+      operationId: list_destinations_api_v1_destinations_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  type: object
+                type: array
+                title: Response List Destinations Api V1 Destinations Get
+    post:
+      tags:
+      - destinations
+      summary: Create Destination
+      description: 'Adds a new destination catalogue row with zero code changes.
+
+
+        Supports multi-instance scaling via configuration alone.'
+      operationId: create_destination_api_v1_destinations_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DestinationCreateRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Create Destination Api V1 Destinations Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/destinations/{destination_id}:
+    get:
+      tags:
+      - destinations
+      summary: Get Destination
+      description: Retrieves destination catalogue row by ID.
+      operationId: get_destination_api_v1_destinations__destination_id__get
+      parameters:
+      - name: destination_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Destination Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Get Destination Api V1 Destinations  Destination Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/destinations/{destination_id}/publish:
+    post:
+      tags:
+      - destinations
+      summary: Publish To Destination
+      description: 'Publishes content to a specific catalogue destination row.
+
+
+        Directly invokes the associated connector without any code changes.'
+      operationId: publish_to_destination_api_v1_destinations__destination_id__publish_post
+      parameters:
+      - name: destination_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Destination Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DestinationPublishRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Publish To Destination Api V1 Destinations  Destination
+                  Id  Publish Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/destinations/import-csv:
+    post:
+      tags:
+      - destinations
+      summary: Import Destinations Csv
+      description: Imports destinations via CSV with deduplication, normalization,
+        and job tracking.
+      operationId: import_destinations_csv_api_v1_destinations_import_csv_post
+      parameters:
+      - name: file
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: File
+      - name: safe_reachability
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Safe Reachability
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/Body_import_destinations_csv_api_v1_destinations_import_csv_post'
+              title: Body
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Import Destinations Csv Api V1 Destinations Import
+                  Csv Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/destinations/{destination_id}/propose-rules:
+    post:
+      tags:
+      - destinations
+      summary: Propose Rules For Destination
+      description: AI adapter-based step proposing community posting rules from guidelines
+        text.
+      operationId: propose_rules_for_destination_api_v1_destinations__destination_id__propose_rules_post
+      parameters:
+      - name: destination_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Destination Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleProposeRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Propose Rules For Destination Api V1 Destinations  Destination
+                  Id  Propose Rules Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/destinations/{destination_id}/confirm-rules:
+    post:
+      tags:
+      - destinations
+      summary: Confirm Rules For Destination
+      description: Human confirmation step required before activating proposed community
+        rules.
+      operationId: confirm_rules_for_destination_api_v1_destinations__destination_id__confirm_rules_post
+      parameters:
+      - name: destination_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Destination Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleConfirmRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Confirm Rules For Destination Api V1 Destinations  Destination
+                  Id  Confirm Rules Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/publish:
+    post:
+      tags:
+      - publish
+      summary: Publish Content
+      description: 'Main publishing endpoint.
+
+
+        Requires Idempotency-Key. Evaluates pre-flight posting rules, rate limits,
+
+        executes connector dispatch, and reconciles on timeout.
+
+        Operations exceeding 2 seconds or requested in async mode return 202 + job_id.'
+      operationId: publish_content_api_v1_publish_post
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishRequestPayload'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Publish Content Api V1 Publish Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/jobs:
+    post:
+      tags:
+      - jobs
+      summary: Create Background Job
+      description: Creates a durable background job and returns 202 + job_id.
+      operationId: create_background_job_api_v1_jobs_post
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Create Background Job Api V1 Jobs Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - jobs
+      summary: List Background Jobs
+      description: Lists recent background jobs with idempotency status, progress,
+        and result links.
+      operationId: list_background_jobs_api_v1_jobs_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                title: Response List Background Jobs Api V1 Jobs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/jobs/{job_id}:
+    get:
+      tags:
+      - jobs
+      summary: Get Background Job
+      description: Retrieves current job status, progress 0-100, and result links.
+      operationId: get_background_job_api_v1_jobs__job_id__get
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Get Background Job Api V1 Jobs  Job Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/files/upload:
+    post:
+      tags:
+      - files
+      summary: Upload File
+      description: Uploads a file directly, validates size limit, stores it, and outputs
+        manifest.
+      operationId: upload_file_api_v1_files_upload_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_file_api_v1_files_upload_post'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Upload File Api V1 Files Upload Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/files/fetch-url:
+    post:
+      tags:
+      - files
+      summary: Fetch File From Url
+      description: Fetches a file from a remote URL with SSRF-safe validation and
+        size limits.
+      operationId: fetch_file_from_url_api_v1_files_fetch_url_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FetchUrlRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Fetch File From Url Api V1 Files Fetch Url Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/files/{file_id}/download:
+    get:
+      tags:
+      - files
+      summary: Download File
+      description: Downloads stored file content.
+      operationId: download_file_api_v1_files__file_id__download_get
+      parameters:
+      - name: file_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: File Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/destinations/{destination_id}/certify:
+    post:
+      tags:
+      - certification
+      summary: Run Destination Certification
+      description: Executes the standard 8-step certification harness against a destination.
+      operationId: run_destination_certification_api_v1_destinations__destination_id__certify_post
+      parameters:
+      - name: destination_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Destination Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/CertifyRequest'
+              - type: 'null'
+              title: Payload
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Run Destination Certification Api V1 Destinations  Destination
+                  Id  Certify Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/destinations/{destination_id}/certification-history:
+    get:
+      tags:
+      - certification
+      summary: Get Destination Certification History
+      description: Retrieves all past certification runs and evidence for a destination.
+      operationId: get_destination_certification_history_api_v1_destinations__destination_id__certification_history_get
+      parameters:
+      - name: destination_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Destination Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                title: Response Get Destination Certification History Api V1 Destinations  Destination
+                  Id  Certification History Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/certification/alerts:
+    get:
+      tags:
+      - certification
+      summary: Get Certification Alerts
+      description: Retrieves contract breakage and demotion alerts.
+      operationId: get_certification_alerts_api_v1_certification_alerts_get
+      parameters:
+      - name: destination_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Destination Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                title: Response Get Certification Alerts Api V1 Certification Alerts
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/rules/audits:
+    get:
+      tags:
+      - rules
+      summary: List Rule Audits
+      description: Lists pre-flight rule decisions and audit records.
+      operationId: list_rule_audits_api_v1_rules_audits_get
+      parameters:
+      - name: destination_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Destination Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                title: Response List Rule Audits Api V1 Rules Audits Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/rules/evaluate:
+    post:
+      tags:
+      - rules
+      summary: Evaluate Rules
+      description: Pre-flight posting rules evaluation without executing publication.
+      operationId: evaluate_rules_api_v1_rules_evaluate_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleEvaluateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Evaluate Rules Api V1 Rules Evaluate Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/rules/tailor:
+    post:
+      tags:
+      - rules
+      summary: Tailor Rendition Preview
+      description: Generates tailored rendition adapted to destination rules, AI disclosure,
+        and surface limits.
+      operationId: tailor_rendition_preview_api_v1_rules_tailor_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TailorPreviewRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Tailor Rendition Preview Api V1 Rules Tailor Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/rules/policies:
+    get:
+      tags:
+      - rules
+      summary: List Policies
+      description: Returns the comprehensive active pre-flight rule policies.
+      operationId: list_policies_api_v1_rules_policies_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  type: object
+                type: array
+                title: Response List Policies Api V1 Rules Policies Get
+  /api/v1/security/token-status:
+    get:
+      tags:
+      - security
+      summary: Get Token Status
+      description: Returns current revocable token status, rate limits, and simulation
+        mode.
+      operationId: get_token_status_api_v1_security_token_status_get
+      parameters:
+      - name: X-IncuBrix-Token
+        in: header
+        required: false
+        schema:
+          type: string
+          title: X-Incubrix-Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Get Token Status Api V1 Security Token Status Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/security/revoke-token:
+    post:
+      tags:
+      - security
+      summary: Revoke Token
+      description: Revokes a demo API access token immediately.
+      operationId: revoke_token_api_v1_security_revoke_token_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeTokenRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Revoke Token Api V1 Security Revoke Token Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/security/restore-token:
+    post:
+      tags:
+      - security
+      summary: Restore Token
+      description: Restores a previously revoked demo API access token.
+      operationId: restore_token_api_v1_security_restore_token_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeTokenRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Restore Token Api V1 Security Restore Token Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/security/simulation-mode:
+    post:
+      tags:
+      - security
+      summary: Set Simulation Mode
+      description: Updates the global simulation mode banner and runtime flag.
+      operationId: set_simulation_mode_api_v1_security_simulation_mode_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulationModeRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Set Simulation Mode Api V1 Security Simulation Mode
+                  Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    Body_import_destinations_csv_api_v1_destinations_import_csv_post:
+      properties:
+        csv_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Csv Text
+      type: object
+      title: Body_import_destinations_csv_api_v1_destinations_import_csv_post
+    Body_upload_file_api_v1_files_upload_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_upload_file_api_v1_files_upload_post
+    CertifyRequest:
+      properties:
+        is_mock:
+          type: boolean
+          title: Is Mock
+          default: true
+      type: object
+      title: CertifyRequest
+    ConnectionPayload:
+      properties:
+        auth_type:
+          type: string
+          title: Auth Type
+          default: none
+        api_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Api Key
+        token:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Token
+        client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Id
+        client_secret:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Secret
+        base_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Base Url
+        extra:
+          type: object
+          title: Extra
+      type: object
+      title: ConnectionPayload
+    CreateJobRequest:
+      properties:
+        payload:
+          type: object
+          title: Payload
+        callback_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Callback Url
+        idempotency_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency Key
+      type: object
+      required:
+      - payload
+      title: CreateJobRequest
+    DestinationCreateRequest:
+      properties:
+        name:
+          type: string
+          title: Name
+        url:
+          type: string
+          title: Url
+        platform_key:
+          type: string
+          title: Platform Key
+        connector_key:
+          type: string
+          title: Connector Key
+        surface:
+          type: string
+          title: Surface
+          default: default
+        category:
+          type: string
+          title: Category
+          default: general
+        audience_tags:
+          items:
+            type: string
+          type: array
+          title: Audience Tags
+        language:
+          type: string
+          title: Language
+          default: en
+        geo:
+          type: string
+          title: Geo
+          default: global
+        est_audience:
+          type: integer
+          title: Est Audience
+          default: 0
+        rules_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Rules Url
+        frequency_cap:
+          type: integer
+          title: Frequency Cap
+          default: 24
+        self_promo_allowed:
+          type: boolean
+          title: Self Promo Allowed
+          default: true
+        link_policy:
+          type: string
+          title: Link Policy
+          default: allowed
+        disclosure_required:
+          type: boolean
+          title: Disclosure Required
+          default: false
+        automation_allowed:
+          type: boolean
+          title: Automation Allowed
+          default: true
+        relevance_score:
+          type: integer
+          title: Relevance Score
+          default: 3
+        relevance_reason:
+          type: string
+          title: Relevance Reason
+          default: ''
+        parameters:
+          type: object
+          title: Parameters
+        connection:
+          anyOf:
+          - $ref: '#/components/schemas/ConnectionPayload'
+          - type: 'null'
+      type: object
+      required:
+      - name
+      - url
+      - platform_key
+      - connector_key
+      title: DestinationCreateRequest
+    DestinationPayload:
+      properties:
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Id
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+        platform_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Platform Key
+        surface:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Surface
+        parameters:
+          type: object
+          title: Parameters
+      type: object
+      title: DestinationPayload
+    DestinationPublishRequest:
+      properties:
+        rendition:
+          $ref: '#/components/schemas/Rendition'
+        idempotency_key:
+          type: string
+          title: Idempotency Key
+      type: object
+      required:
+      - rendition
+      - idempotency_key
+      title: DestinationPublishRequest
+    FetchUrlRequest:
+      properties:
+        url:
+          type: string
+          title: Url
+        max_size_bytes:
+          type: integer
+          title: Max Size Bytes
+          default: 10485760
+        allow_local_for_tests:
+          type: boolean
+          title: Allow Local For Tests
+          default: false
+      type: object
+      required:
+      - url
+      title: FetchUrlRequest
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    MediaItem:
+      properties:
+        url:
+          type: string
+          title: Url
+        media_type:
+          type: string
+          title: Media Type
+        size_bytes:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Size Bytes
+        alt_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Alt Text
+      type: object
+      required:
+      - url
+      - media_type
+      title: MediaItem
+    PublishRequestPayload:
+      properties:
+        rendition:
+          $ref: '#/components/schemas/Rendition'
+        destination_ids:
+          items:
+            type: string
+          type: array
+          title: Destination Ids
+        destination:
+          anyOf:
+          - $ref: '#/components/schemas/DestinationPayload'
+          - type: 'null'
+        connection:
+          anyOf:
+          - $ref: '#/components/schemas/ConnectionPayload'
+          - type: 'null'
+        callback_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Callback Url
+        async_mode:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Async Mode
+          default: false
+      type: object
+      required:
+      - rendition
+      title: PublishRequestPayload
+    Rendition:
+      properties:
+        title:
+          type: string
+          title: Title
+        body:
+          type: string
+          title: Body
+        canonical_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Canonical Url
+        tags:
+          items:
+            type: string
+          type: array
+          title: Tags
+        media:
+          items:
+            $ref: '#/components/schemas/MediaItem'
+          type: array
+          title: Media
+        ai_disclosure:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ai Disclosure
+        custom_fields:
+          type: object
+          title: Custom Fields
+      type: object
+      required:
+      - title
+      - body
+      title: Rendition
+    RevokeTokenRequest:
+      properties:
+        token:
+          type: string
+          title: Token
+      type: object
+      required:
+      - token
+      title: RevokeTokenRequest
+    RuleConfirmRequest:
+      properties:
+        proposal_id:
+          type: string
+          title: Proposal Id
+        confirmed_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Confirmed By
+          default: human_operator
+      type: object
+      required:
+      - proposal_id
+      title: RuleConfirmRequest
+    RuleEvaluateRequest:
+      properties:
+        destination_id:
+          type: string
+          title: Destination Id
+        rendition:
+          $ref: '#/components/schemas/Rendition'
+      type: object
+      required:
+      - destination_id
+      - rendition
+      title: RuleEvaluateRequest
+    RuleProposeRequest:
+      properties:
+        rules_text:
+          type: string
+          title: Rules Text
+        rules_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Rules Url
+      type: object
+      required:
+      - rules_text
+      title: RuleProposeRequest
+    SimulationModeRequest:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+      type: object
+      required:
+      - enabled
+      title: SimulationModeRequest
+    TailorPreviewRequest:
+      properties:
+        destination_id:
+          type: string
+          title: Destination Id
+        rendition:
+          $ref: '#/components/schemas/Rendition'
+      type: object
+      required:
+      - destination_id
+      - rendition
+      title: TailorPreviewRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
