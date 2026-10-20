@@ -280,6 +280,8 @@ async def ghost_delete_post(post_id: str):
 # --- Mock Partner Signed Webhook Receiver ---
 
 @app.post("/partner/webhook")
+@app.post("/signed_webhook")
+@app.post("/webhook")
 async def partner_webhook(
     request: Request,
     signature_header: Optional[str] = Header(None, alias="X-IncuBrix-Signature"),
@@ -408,6 +410,7 @@ async def mock_hashnode_graphql(request: Request):
 
 # --- Mock Slack Webhook API ---
 @app.post("/slack/webhook")
+@app.post("/slack")
 async def mock_slack_webhook(request: Request):
     check_scenario_errors("slack")
     data = await request.json()

@@ -147,7 +147,45 @@ class CertificationHarness:
         is_mock: bool = True,
     ) -> CertificationRunRecord:
         connector_key = destination.platform_key or connection.extra.get("connector_key") or "stub"
-        connector = connector_override or registry.get_connector(connector_key)
+
+        # When evaluating in MOCK mode without an explicit connector override,
+        # wire up an in-process mock platform transport so the probe tests against the mock platform server
+        if is_mock and connector_override is None:
+            try:
+                from httpx import ASGITransport, AsyncClient
+                from mock_platforms.main import app as mock_platforms_app
+                mock_client = AsyncClient(transport=ASGITransport(app=mock_platforms_app), base_url="http://test")
+                base_conn = registry.get_connector(connector_key)
+                connector = base_conn.__class__(base_conn.manifest, http_client=mock_client)
+            except Exception:
+                connector = registry.get_connector(connector_key)
+        else:
+            connector = connector_override or registry.get_connector(connector_key)
+
+        if is_mock:
+            # Provide mock sandbox connection credentials and test endpoints
+            if not connection.api_key:
+                connection.api_key = f"mock_{connector_key}_cert_key"
+            if not connection.token:
+                connection.token = f"mock_{connector_key}_token"
+            if not connection.base_url:
+                connection.base_url = destination.parameters.get("base_url") or f"http://test/{connector_key}"
+            if "base_url" not in destination.parameters:
+                destination.parameters["base_url"] = connection.base_url or f"http://test/{connector_key}"
+            if "category_id" not in destination.parameters and connector_key == "discourse":
+                destination.parameters["category_id"] = 1
+            if connector_key == "signed_webhook":
+                connection.api_key = "test_webhook_secret_key_12345"
+                connection.client_secret = "test_webhook_secret_key_12345"
+                connection.base_url = "http://test"
+                destination.parameters["base_url"] = "http://test"
+            if connector_key == "slack":
+                connection.base_url = "http://test/slack"
+                destination.parameters["base_url"] = "http://test/slack"
+                destination.parameters["webhook_url"] = "http://test/slack"
+            if not connection.extra or "username" not in connection.extra:
+                connection.extra = dict(connection.extra or {})
+                connection.extra["username"] = "incubrix_probe"
 
         # Collect prior evidence
         prior_runs = self.store.get_history(destination.id or "default")
