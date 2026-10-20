@@ -17,7 +17,7 @@ services:
       - key: WEBHOOK_SIGNING_SECRET
         value: whsec_prod_signing_key_32chars_long_placeholder
       - key: DATABASE_URL
-        value: sqlite+aiosqlite:///./data/incubrix.db
+        value: sqlite+aiosqlite:///incubrix.db
       - key: REDIS_URL
         value: ""
       - key: S3_ENDPOINT

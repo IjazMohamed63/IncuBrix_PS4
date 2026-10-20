@@ -24,6 +24,8 @@ This document declares all third-party libraries, datasets, and runtime dependen
 | `pytest` | 8.1.1 | MIT | Yes | Test framework |
 | `pytest-asyncio` | 0.23.5 | Apache-2.0 | Yes | Asynchronous test execution runner |
 | `pytest-cov` | 4.1.0 | MIT | Yes | Test coverage reporting |
+| `aiosqlite` | 0.22.1 | MIT | Yes | Asynchronous SQLite driver for zero-dependency cloud deployments |
+
 
 ---
 
