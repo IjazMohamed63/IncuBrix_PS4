@@ -1,0 +1,28 @@
+name,url,platform_key,connector_key,surface,category,audience_tags,language,geo,est_audience,frequency_cap,self_promo_allowed,link_policy,disclosure_required,automation_allowed
+"OpenAI Developer Community","https://community.openai.com","discourse","discourse","forum","ai","ai;machine-learning;api;llm","en","global",150000,24,false,whitelist,true,false
+"PyTorch Developer Community","https://discuss.pytorch.org","discourse","discourse","forum","ai","ai;pytorch;deep-learning;machine-learning","en","global",95000,24,false,allowed,true,false
+"Hugging Face ML Community","https://discuss.huggingface.co","discourse","discourse","forum","ai","ai;transformers;nlp;llm","en","global",140000,24,false,allowed,true,false
+"VideoLAN Developer Forum","https://forum.videolan.org","discourse","discourse","forum","video","video;vlc;codecs;streaming","en","global",60000,48,false,allowed,false,false
+"Doom9 Video Compression Forum","https://forum.doom9.org","discourse","discourse","forum","video","video;encoding;ffmpeg;codecs;streaming","en","global",40000,48,false,allowed,false,false
+"Swift Programming Language Forum","https://forums.swift.org","discourse","discourse","forum","developer","swift;ios;systems;compilers","en","global",65000,48,false,allowed,false,false
+"Rust Users Community Forum","https://users.rust-lang.org","discourse","discourse","forum","developer","rust;systems;memory-safety;wasm","en","global",85000,24,false,allowed,false,false
+"Discourse Meta Community","https://meta.discourse.org","discourse","discourse","forum","saas","open-source;community;sysadmin","en","global",75000,24,false,allowed,false,false
+"Lemmy Technology Community","https://lemmy.world/c/technology","lemmy","lemmy","forum","developer","technology;open-source;linux;privacy","en","global",120000,12,false,allowed,false,true
+"Lemmy Programming Community","https://lemmy.world/c/programming","lemmy","lemmy","forum","developer","programming;algorithms;python;rust","en","global",95000,24,false,allowed,false,true
+"Lemmy Artificial Intelligence","https://lemmy.world/c/artificial_intelligence","lemmy","lemmy","forum","ai","ai;machine-learning;deep-learning","en","global",45000,24,false,allowed,true,true
+"Dev.to Artificial Intelligence Hub","https://dev.to/t/ai","devto","devto","article","ai","ai;machine-learning;python;llm","en","global",280000,24,true,allowed,true,true
+"Dev.to Machine Learning Community","https://dev.to/t/machinelearning","devto","devto","article","ai","ai;machine-learning;deep-learning;python","en","global",190000,24,true,allowed,true,true
+"Dev.to Web Development Hub","https://dev.to/t/webdev","devto","devto","article","developer","webdev;javascript;react;backend","en","global",450000,24,true,allowed,false,true
+"Dev.to Python Publishing Hub","https://dev.to/t/python","devto","devto","article","developer","python;django;data-science;fastapi","en","global",320000,24,true,allowed,false,true
+"Dev.to Cloud & DevOps Hub","https://dev.to/t/devops","devto","devto","article","saas","devops;kubernetes;docker;aws","en","global",210000,24,true,allowed,false,true
+"Ghost Creator Engineering Journal","https://ghost.org/changelog","ghost","ghost","article","creators","publishing;journalism;newsletter;saas","en","global",180000,48,true,allowed,false,true
+"Hashnode Engineering Architecture","https://hashnode.com/n/architecture","hashnode","hashnode","article","developer","architecture;microservices;cloud;scaling","en","global",190000,24,true,allowed,false,true
+"Hashnode Generative AI Hub","https://hashnode.com/n/ai","hashnode","hashnode","article","ai","ai;generative-ai;agents;automation","en","global",140000,24,true,allowed,true,true
+"Hashnode Machine Learning Hub","https://hashnode.com/n/machine-learning","hashnode","hashnode","article","ai","ai;machine-learning;deep-learning","en","global",110000,24,true,allowed,true,true
+"Hashnode Founders & Indie Hackers","https://hashnode.com/n/indie-hackers","hashnode","hashnode","article","founders","founders;bootstrapping;startups;saas","en","global",85000,48,true,allowed,false,true
+"Indie Hackers Product Showcase","https://www.indiehackers.com/products","assisted","assisted","forum","founders","startups;founders;saas;bootstrapping","en","global",160000,168,false,whitelist,false,false
+"SaaS Growth & Marketing Community","https://syndication.incubrix.com/slack/growth","slack","slack","message","marketing","marketing;growth;saas;conversion","en","global",15000,24,true,allowed,false,true
+"Video Streaming Architecture Channel","https://syndication.incubrix.com/slack/video","slack","slack","message","video","video;streaming;webrtc;ffmpeg","en","global",12000,24,true,allowed,false,true
+"AI Research Weekly Syndication MRSS","https://syndication.incubrix.com/feeds/ai-research.xml","mrss_feed","mrss_feed","feed_item","ai","ai;deep-learning;research;arxiv","en","global",50000,12,true,allowed,false,true
+"Global Developer Podcast MRSS Feed","https://syndication.incubrix.com/feeds/developer-podcast.xml","mrss_feed","mrss_feed","feed_item","creators","podcast;developer;tech;creators","en","global",35000,24,true,allowed,false,true
+"Partner Content Syndication Webhook","https://partner.syndication.net/api/v1/ingest","signed_webhook","signed_webhook","article","marketing","syndication;distribution;news;b2b","en","global",500000,12,true,allowed,false,true
