@@ -1,6 +1,6 @@
 {
   "connector_key": "slack",
-  "base_url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+  "base_url": "https://example.com/slack-webhook-placeholder",
   "api_key": "xoxb-your-bot-token-if-using-web-api",
   "extra": {
     "channel": "#content-syndication"
