@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from api.middleware.correlation import CorrelationIdMiddleware
 from api.middleware.error_handler import register_error_handlers
 from api.middleware.security import DemoSecurityMiddleware
@@ -116,6 +118,32 @@ app.include_router(security_router)
 
 # Initial load of connectors
 load_all_connectors()
+
+# Serve Frontend Static Assets & Single Page Application (SPA)
+web_dist_dir = Path(__file__).resolve().parent.parent / "web" / "dist"
+if web_dist_dir.exists() and (web_dist_dir / "index.html").exists():
+    if (web_dist_dir / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(web_dist_dir / "assets")), name="assets")
+
+    @app.get("/", include_in_schema=False)
+    async def serve_index():
+        return FileResponse(web_dist_dir / "index.html")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa_fallback(full_path: str):
+        # Exclude API endpoints, health, docs, and metrics from SPA routing
+        if full_path.startswith(("api/", "connector/", "health", "ready", "docs", "redoc", "openapi.json", "metrics")):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Not Found")
+
+        static_file = web_dist_dir / full_path
+        if static_file.exists() and static_file.is_file():
+            return FileResponse(static_file)
+        return FileResponse(web_dist_dir / "index.html")
+else:
+    @app.get("/", include_in_schema=False)
+    async def root_docs_redirect():
+        return RedirectResponse(url="/docs")
 
 
 if __name__ == "__main__":

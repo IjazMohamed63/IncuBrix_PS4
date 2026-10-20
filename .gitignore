@@ -9,5 +9,4 @@ data/
 batch_run_output/
 *.db
 web/node_modules/
-web/dist/
 ANTIGRAVITY_MASTER_PROMPT.md
